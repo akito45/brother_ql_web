@@ -16,6 +16,8 @@ function formData(cut_once) {
         print_type:    $('input[name=printType]:checked').val(),
         qrcode_size:   $('#qrCodeSize').val(),
         qrcode_correction: $('#qrCodeCorrection option:selected').val(),
+        image_bw_threshold: $('#imageBwThreshold').val(),
+        image_mode:         $('input[name=imageMode]:checked').val(),
         print_count:       $('#printCount').val(),
         print_color:       $('input[name=printColor]:checked').val(),
         line_spacing:      $('input[name=lineSpacing]:checked').val(),

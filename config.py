@@ -26,4 +26,7 @@ class Config(object):
     LABEL_DEFAULT_FONT_FAMILY = 'DejaVu Serif'
     LABEL_DEFAULT_FONT_STYLE = 'Book'
 
+    IMAGE_DEFAULT_MODE = 'grayscale'
+    IMAGE_DEFAULT_BW_THRESHOLD = 70
+
     FONT_FOLDER = ''

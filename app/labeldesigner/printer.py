@@ -1,6 +1,6 @@
 from brother_ql.backends import backend_factory, guess_backend
 from brother_ql import BrotherQLRaster, create_label
-from .label import LabelOrientation, LabelType
+from .label import LabelOrientation, LabelType, LabelContent
 
 
 class PrinterQueue:
@@ -67,11 +67,17 @@ class PrinterQueue:
 
             img = queue_entry['label'].generate()
 
+            if queue_entry['label'].label_content == LabelContent.IMAGE_GRAYSCALE: 
+                dither = True
+            else:
+                dither = False
+
             create_label(
                 qlr,
                 img,
                 self.label_size,
                 red='red' in self.label_size,
+                dither=dither,
                 cut=queue_entry['cut'],
                 rotate=rotate)
 
