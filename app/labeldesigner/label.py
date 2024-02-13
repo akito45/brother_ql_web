@@ -189,7 +189,7 @@ class SimpleLabel:
             box_size=self._qr_size,
             border=0,
         )
-        qr.add_data(self._text)
+        qr.add_data(self._text.encode("utf-8-sig"))
         qr.make(fit=True)
         qr_img = qr.make_image(
             fill_color='red' if (255, 0, 0) == self._fore_color else 'black',
