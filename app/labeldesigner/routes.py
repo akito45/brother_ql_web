@@ -2,7 +2,7 @@ import os
 
 from flask import current_app, render_template, request, make_response
 
-from brother_ql.devicedependent import label_type_specs, label_sizes
+from brother_ql.devicedependent import label_type_specs, label_sizes, two_color_support
 from brother_ql.devicedependent import ENDLESS_LABEL, DIE_CUT_LABEL, ROUND_DIE_CUT_LABEL
 
 from . import bp
@@ -27,9 +27,11 @@ LABEL_SIZES = [(
 
 @bp.route('/')
 def index():
+    RED_SUPPORT = current_app.config['PRINTER_MODEL'] in two_color_support
     return render_template('labeldesigner.html',
                            font_family_names=FONTS.fontlist(),
                            label_sizes=LABEL_SIZES,
+                           red_support=RED_SUPPORT,
                            default_label_size=current_app.config['LABEL_DEFAULT_SIZE'],
                            default_font_size=current_app.config['LABEL_DEFAULT_FONT_SIZE'],
                            default_orientation=current_app.config['LABEL_DEFAULT_ORIENTATION'],

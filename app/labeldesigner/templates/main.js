@@ -19,7 +19,9 @@ function formData(cut_once) {
         image_bw_threshold: $('#imageBwThreshold').val(),
         image_mode:         $('input[name=imageMode]:checked').val(),
         print_count:       $('#printCount').val(),
+        {% if red_support %}
         print_color:       $('input[name=printColor]:checked').val(),
+        {% endif %}
         line_spacing:      $('input[name=lineSpacing]:checked').val(),
         cut_once:          cut_once ? 1 : 0,
     }
@@ -72,6 +74,7 @@ function preview() {
         $('.marginsLeftRight').prop('disabled', false).removeAttr('title');
     }
 
+    {% if red_support %}
     if ($('#labelSize option:selected').val().includes('red')) {
         $('#print_color_black').removeClass('disabled');
         $('#print_color_red').removeClass('disabled');
@@ -79,6 +82,7 @@ function preview() {
         $('#print_color_black').addClass('disabled').prop('active', true);
         $('#print_color_red').addClass('disabled');
     }
+    {% endif %}
 
     if($('input[name=printType]:checked').val() == 'image') {
         $('#groupLabelText').hide();

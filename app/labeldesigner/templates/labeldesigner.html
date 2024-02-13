@@ -31,6 +31,7 @@
                                 </label>
                             </div>
 
+                            {% if red_support %}
                             <label for="printColor" class="control-label input-group" style="margin-top: 10px; margin-bottom: 0">Print Color:</label>
                             <div class="btn-group btn-group-toggle btn-block" data-toggle="buttons">
                                 <label class="btn btn-dark" id="print_color_black">
@@ -40,6 +41,7 @@
                                     <input type="radio" name="printColor" onchange="preview()" value="red" aria-label="Red">Red
                                 </label>
                             </div>
+                            {% endif %}
 
                         </div>
                         <!-- class="card-body" -->
