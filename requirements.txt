@@ -3,4 +3,4 @@ Flask
 flask_bootstrap4
 qrcode
 pdf2image
-Pillow==9.5
+Pillow==10.*
