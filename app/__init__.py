@@ -23,7 +23,6 @@ def create_app(config_class=Config):
     app.config.from_pyfile('application.py', silent=True)
 
     app.logger.setLevel(app.config['LOG_LEVEL'])
-
     main(app)
 
     app.config['BOOTSTRAP_SERVE_LOCAL'] = True

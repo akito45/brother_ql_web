@@ -1,6 +1,7 @@
 from enum import Enum, auto
 from qrcode import QRCode, constants
 from PIL import Image, ImageDraw, ImageFont
+import re
 
 
 class LabelContent(Enum):
@@ -26,6 +27,35 @@ class TextAlign(Enum):
     LEFT = 'left'
     CENTER = 'center'
     RIGHT = 'right'
+
+
+class TokenTextColor(Enum):
+    RED = (255, 0, 0)  # (255, 0, 0)
+    BLACK = (0, 0, 0)  # (0, 0, 0)
+
+
+class TokenModifier(Enum):
+    BOLD = "bold"
+    ITALIC = "italic"
+    UNDERLINE = "underline"
+
+
+class ParsedToken:
+    text: str
+    color: TokenTextColor
+    modifier: TokenModifier
+
+    def __init__(self, text: str, color: TokenTextColor, modifier: TokenModifier = None):
+        self.text = text
+        self.color = color
+        self.modifier = modifier
+
+
+class ParsedLine:
+    tokens: list[ParsedToken]
+
+    def __init__(self):
+        self.tokens = []
 
 
 class SimpleLabel:
@@ -174,13 +204,18 @@ class SimpleLabel:
 
         if self._label_content in (LabelContent.TEXT_ONLY, LabelContent.TEXT_QRCODE):
             draw = ImageDraw.Draw(imgResult)
-            draw.multiline_text(
-                text_offset,
+            self._draw_text(
                 self._prepare_text(self._text),
-                self._fore_color,
-                font=self._get_font(),
-                align=self._text_align,
-                spacing=int(self._font_size*((self._line_spacing - 100) / 100)))
+                draw,
+                offset=text_offset)
+
+            #draw.multiline_text(
+            #    text_offset,
+            #    self._prepare_text(self._text),
+            #    self._fore_color,
+            #    font=self._get_font(),
+            #    align=self._text_align,
+            #    spacing=int(self._font_size*((self._line_spacing - 100) / 100)))
 
         return imgResult
 
@@ -198,27 +233,70 @@ class SimpleLabel:
             back_color="white")
         return qr_img
 
+
+
+
+    def _draw_text(self, parsedText: list[ParsedLine], draw: ImageDraw.Draw, offset:list[int] = [0,0]) -> list[int]:
+
+        currentHeight = offset[1]
+        maxWith = 0
+
+        for parsedLine in parsedText:
+            currentWidth = offset[0]
+            thisHeight = 0
+            for parsedToken in parsedLine.tokens:
+                font = self._get_font(parsedToken.modifier == TokenModifier.BOLD)
+                draw.text((currentWidth, currentHeight), parsedToken.text, font=font, fill=parsedToken.color.value)
+                currentBB = draw.textbbox((currentWidth, currentHeight), parsedToken.text, font=font)
+                currentWidth = currentBB[2]
+                maxWith = max(maxWith, currentWidth)
+                thisHeight = max(thisHeight, currentBB[3])
+            currentHeight = thisHeight
+        return [0, 0, maxWith, currentHeight]
+
     def _get_text_size(self):
         font = self._get_font()
-        img = Image.new('L', (20, 20), 'white')
+        img = Image.new('RGB', (20, 20), 'white')
+        print(img)
         draw = ImageDraw.Draw(img)
-        return draw.multiline_textbbox(
-            (0, 0),
-            self._prepare_text(self._text),
-            font=font,
-            align=self._text_align,
-            spacing=int(self._font_size*((self._line_spacing - 100) / 100)))
+        parsedText = self._prepare_text(self._text)
+        return self._draw_text(parsedText, draw)
+
+    def _get_font(self, bold: bool = False):
+        path = self._font_path
+        if bold and path.lower().count('bold') == 0:
+            path = path.replace('.ttf', '-Bold.ttf')
+        return ImageFont.truetype(path, self._font_size)
+
+
 
     @staticmethod
-    def _prepare_text(text):
-        # workaround for a bug in multiline_textsize()
-        # when there are empty lines in the text:
-        lines = []
+    def _prepare_text(text) -> list[ParsedLine]:
+        # split text into lines
+        # split lines into tokens
+        # make it black, red, black, red, black, red, ...
+        parsedLines : list[ParsedLine] = []
+        delimiters = r'([@#])'
         for line in text.split('\n'):
-            if line == '':
-                line = ' '
-            lines.append(line)
-        return '\n'.join(lines)
+            red = False
+            bold = False
+            parsedLine = ParsedLine()
+            for subline in re.split(delimiters, line):
+                if (subline == '@'):
+                    red = not red
+                    continue
+                if (subline == '#'):
+                    bold = not bold
+                    continue
+                parsedToken = ParsedToken(subline, TokenTextColor.BLACK)
+                if red:
+                    parsedToken.color = TokenTextColor.RED
+                if bold:
+                    parsedToken.modifier = TokenModifier.BOLD
+                parsedLine.tokens.append(parsedToken)
 
-    def _get_font(self):
-        return ImageFont.truetype(self._font_path, self._font_size)
+            parsedLines.append(parsedLine)
+        return parsedLines
+
+
+
