@@ -53,9 +53,17 @@ class ParsedToken:
 
 class ParsedLine:
     tokens: list[ParsedToken]
+    width: int = 0
+    padding: int = 0
 
     def __init__(self):
         self.tokens = []
+
+    def text(self) -> str:
+        text = ""
+        for token in self.tokens:
+            text += token.text
+        return text
 
 
 class SimpleLabel:
@@ -207,7 +215,8 @@ class SimpleLabel:
             self._draw_text(
                 self._prepare_text(self._text),
                 draw,
-                offset=text_offset)
+                offset=text_offset,
+                textAlign=self._text_align)
 
             #draw.multiline_text(
             #    text_offset,
@@ -236,13 +245,19 @@ class SimpleLabel:
 
 
 
-    def _draw_text(self, parsedText: list[ParsedLine], draw: ImageDraw.Draw, offset:list[int] = [0,0]) -> list[int]:
+    def _draw_text(self, parsedText: list[ParsedLine], draw: ImageDraw.Draw, offset:list[int] = [0,0], textAlign : TextAlign = TextAlign.CENTER.value) -> list[int]:
 
         currentHeight = offset[1]
         maxWith = 0
-
+        #print("text align {}", textAlign);
         for parsedLine in parsedText:
-            currentWidth = offset[0]
+            if textAlign == TextAlign.CENTER.value and parsedLine.padding != 0:
+                currentWidth = offset[0] + parsedLine.padding
+            elif textAlign == TextAlign.RIGHT.value and parsedLine.padding != 0:
+                currentWidth = offset[0] + 2 * parsedLine.padding
+            else:
+                currentWidth = offset[0]
+
             thisHeight = 0
             for parsedToken in parsedLine.tokens:
                 font = self._get_font(parsedToken.modifier == TokenModifier.BOLD)
@@ -257,10 +272,13 @@ class SimpleLabel:
     def _get_text_size(self):
         font = self._get_font()
         img = Image.new('RGB', (20, 20), 'white')
-        print(img)
         draw = ImageDraw.Draw(img)
         parsedText = self._prepare_text(self._text)
         return self._draw_text(parsedText, draw)
+    def _get_text_size_line(self, line : ParsedLine) -> list[int]:
+        img = Image.new('RGB', (20, 20), 'white')
+        draw = ImageDraw.Draw(img)
+        return self._draw_text([line], draw)
 
     def _get_font(self, bold: bool = False):
         path = self._font_path
@@ -269,9 +287,19 @@ class SimpleLabel:
         return ImageFont.truetype(path, self._font_size)
 
 
+    def _add_sizes(self, parsedLines: list[ParsedLine]):
+        maxWidth = 0
+        maxHeight = 0
+        for parsedLine in parsedLines:
+            sizes = self._get_text_size_line(parsedLine)
+            parsedLine.width = sizes[2]
+            maxWidth = max(maxWidth, sizes[2])
+            maxHeight = max(maxHeight, sizes[3])
+        for parsedLine in parsedLines:
+            parsedLine.padding = (maxWidth - parsedLine.width) // 2
 
-    @staticmethod
-    def _prepare_text(text) -> list[ParsedLine]:
+
+    def _prepare_text(self, text) -> list[ParsedLine]:
         # split text into lines
         # split lines into tokens
         # make it black, red, black, red, black, red, ...
@@ -296,6 +324,8 @@ class SimpleLabel:
                 parsedLine.tokens.append(parsedToken)
 
             parsedLines.append(parsedLine)
+
+        self._add_sizes(parsedLines)
         return parsedLines
 
 
