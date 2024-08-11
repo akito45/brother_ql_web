@@ -50,6 +50,9 @@ class ParsedToken:
         self.color = color
         self.modifier = modifier
 
+    def isEmpty(self) -> bool:
+        return len(self.text) == 0
+
 
 class ParsedLine:
     tokens: list[ParsedToken]
@@ -64,7 +67,11 @@ class ParsedLine:
         for token in self.tokens:
             text += token.text
         return text
-
+    def isEmpty(self) -> bool:
+        for token in self.tokens:
+            if not token.isEmpty():
+                return False
+        return True
 
 class SimpleLabel:
     qr_correction_mapping = {
@@ -322,7 +329,9 @@ class SimpleLabel:
                 if bold:
                     parsedToken.modifier = TokenModifier.BOLD
                 parsedLine.tokens.append(parsedToken)
-
+            # add spacey token to make sure the line is not empty
+            if parsedLine.isEmpty():
+                parsedLine.tokens.append(ParsedToken(" ", TokenTextColor.BLACK))
             parsedLines.append(parsedLine)
 
         self._add_sizes(parsedLines)
